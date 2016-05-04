@@ -1,0 +1,9 @@
+9.1   # Fermi energy (eV)
+5.1   # Work function (eV)
+200   # Primary electron energy (eV)
+0.0 0.0 0.0 # Initial coordinates of electron (a0)
+0.0   # Initial theta angle (rad)
+0.0   # Initial phi angle (rad)
+1    # Number of primary electrons
+diffinelcs_200.dat # Filename for differential inelastic cross section data
+elfqw.dat # Filename for energy loss function data

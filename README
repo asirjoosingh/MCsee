@@ -1,0 +1,13 @@
+
+------------------------------ MCsee ------------------------------
+
+  Code for a Monte Carlo (MC) approach for calculating secondary
+  electron emission (SEE) from metal surfaces
+
+  Description of repository contents:
+   mcsee.py: module containing MCsee methods and class definitions
+   mcsee_driver.py: script used to perform MCsee calculations
+   example/: directory containing example with necessary input files
+
+-------------------------------------------------------------------
+
