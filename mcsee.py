@@ -46,11 +46,17 @@ def readparams(filestring):
   del lines[0]
   nprimaryelecs=int(lines[0].strip().split()[0])
   del lines[0]
+  nelecpercycle=int(lines[0].strip().split()[0])
+  del lines[0]
   fdiffinelcs=lines[0].strip().split()[0]
   del lines[0]
   felf=lines[0].strip().split()[0]
   del lines[0]
-  return Efermi,workfn,en0,coords0,theta0,phi0,nprimaryelecs,fdiffinelcs,felf
+  dirececs=lines[0].strip().split()[0]
+  del lines[0]
+  fimfp=lines[0].strip().split()[0]
+  del lines[0]
+  return Efermi,workfn,en0,coords0,theta0,phi0,nprimaryelecs,nelecpercycle,fdiffinelcs,felf,dirececs,fimfp
 
 def runmccycle(elecs,ecsdata,ics,Efermi,workfn,stopen):
 # Set up random number generators
@@ -502,10 +508,10 @@ if __name__ == "__main__":
  currdir=os.getcwd()
 
 # Read system parameters
- Efermi,workfn,en0,coords0,theta0,phi0,nprimaryelecs,fdiffinelcs,felf=readparams("params.in")
+ Efermi,workfn,en0,coords0,theta0,phi0,nprimaryelecs,junk,fdiffinelcs,felf,decs,fimfp=readparams("params.in")
  stopen=Efermi+workfn # elecs with less than this energy cannot be transmitted
 
- os.chdir("/home/ars217/Ni_NIST_data/elastic")
+ os.chdir(decs)
  contents=os.listdir(".")
  ecsdata=[]
  for item in contents:
@@ -514,7 +520,7 @@ if __name__ == "__main__":
    ecsdata.append(cs)
 
  os.chdir(currdir)
- ics=InelScattCrossSec("/home/ars217/Ni_NIST_data/imfpdata/imfp_Ni.dat")
+ ics=InelScattCrossSec(fimfp)
 # print ics.atnum,ics.atweight,ics.density
 # plotdata(ics.imfpdata,"imfp_vs_E.dat")
  ics.readicsdata(fdiffinelcs,felf,Efermi)

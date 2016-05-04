@@ -4,15 +4,13 @@ import os
 from copy import deepcopy
 from mcsee import readparams,runmccycle,ElScattCrossSec,InelScattCrossSec,Electron
 
-nprimary=100000
-
 currdir=os.getcwd()
 
 # Read system parameters
-Efermi,workfn,en0,coords0,theta0,phi0,nelecperrun,fdiffinelcs,felf=readparams("params.in")
+Efermi,workfn,en0,coords0,theta0,phi0,nprimary,nelecperrun,fdiffinelcs,felf,decs,fimfp=readparams("params.in")
 stopen=Efermi+workfn # elecs with less than this energy cannot be transmitted
 
-os.chdir("/home/ars217/Ni_NIST_data/elastic")
+os.chdir(decs)
 contents=os.listdir(".")
 ecsdata=[]
 for item in contents:
@@ -20,7 +18,7 @@ for item in contents:
   ecsdata.append(cs)
 
 os.chdir(currdir)
-ics=InelScattCrossSec("/home/ars217/Ni_NIST_data/imfpdata/imfp_Ni.dat")
+ics=InelScattCrossSec(fimfp)
 ics.readicsdata(fdiffinelcs,felf,Efermi)
 
 elecs0=[]
