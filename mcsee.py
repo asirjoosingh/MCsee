@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import os
+import numpy as np
 from random import Random
-from numpy import *
-from subprocess import *
+from subprocess import Popen,PIPE
+from utils import findnearest
 from convfactors import *
 
 
@@ -17,13 +18,6 @@ def plotdata(data,filestring):
     outp.write("%20.10f%20.10f\n"%(data[i][0],data[i][1]))
   outp.close()
   return
-
-def findnearest(arr,value):
-  constarr=zeros(len(arr))
-  constarr.fill(value)
-  ind=argmin(abs(arr-constarr))
-  val=arr[ind]
-  return ind,val
 
 def readparams(filestring):
   try:
@@ -70,7 +64,7 @@ def runmccycle(elecs,ecsdata,ics,Efermi,workfn,stopen):
     randarr[i].jumpahead(i*1000000001)
 
 # Tabulate EMFP and IMFP energies
-  ecsenergies=zeros(len(ecsdata))
+  ecsenergies=np.zeros(len(ecsdata))
   for i in range(len(ecsdata)):
     ecsenergies[i]=ecsdata[i].energy
   icsenergies=ics.getEcoords()
@@ -91,7 +85,7 @@ def runmccycle(elecs,ecsdata,ics,Efermi,workfn,stopen):
 
 # Determine length before scattering event
       rand1=randarr[0].random()
-      s=-el.mfp*log(rand1)
+      s=-el.mfp*np.log(rand1)
       el.updatecoords(s)
 #      print "Moving by: ",s
 #      print el
@@ -117,11 +111,11 @@ def runmccycle(elecs,ecsdata,ics,Efermi,workfn,stopen):
       if elastic:
 # Elastic scattering: determine angles after scattering
        rand3=randarr[2].random()
-       ecsintind,ecsintval=findnearest(ecsdata[el.ecsind].cumintdata,rand3*ecsdata[el.ecsind].totcrosssec/(2.*pi))
+       ecsintind,ecsintval=findnearest(ecsdata[el.ecsind].cumintdata,rand3*ecsdata[el.ecsind].totcrosssec/(2.*np.pi))
        dtheta=ecsdata[el.ecsind].data[ecsintind][0]
 
        rand4=randarr[3].random()
-       dphi=2*pi*rand4
+       dphi=2*np.pi*rand4
 
 #       print "Elastic (dtheta,dphi):",dtheta*180/pi,dphi*180/pi
        el.updatevdirecpolar(dtheta,dphi)
@@ -142,14 +136,14 @@ def runmccycle(elecs,ecsdata,ics,Efermi,workfn,stopen):
        dtheta=ics.finddcsangle(el.energy*ev2au,delE,icsind,rand6)
 
        rand7=randarr[6].random()
-       dphi=2*pi*rand7
+       dphi=2*np.pi*rand7
 
 #       print "Inelastic (delE,dtheta,dphi)",delE*au2ev,dtheta*180/pi,dphi*180/pi
 
        newen=delE*au2ev+Efermi
        if newen > stopen: # Only generate secondary electron if energy greater than stopped energy cutoff
         newel=Electron(el.order+1,delE*au2ev+Efermi,el.coords,el.vtheta,el.vphi,ecsdata,ics)
-        newel.updatevdirecpolar(arcsin(cos(dtheta)),dphi+pi)
+        newel.updatevdirecpolar(np.arcsin(np.cos(dtheta)),dphi+np.pi)
         secelecs.append(newel)
 
        el.updatevdirecpolar(dtheta,dphi)
@@ -197,11 +191,11 @@ class ElScattCrossSec:
     while not done:
       linesplit=lines[0].strip().split()
       del lines[0]
-      ang=float(linesplit[0])*pi/180.
+      ang=float(linesplit[0])*np.pi/180.
       val=float(linesplit[1])
       self.data.append((ang,val))
       if len(self.cumintdata) > 0:
-       cumint+=0.5*(ang-ang0)*(sin(ang)*val+sin(ang0)*val0)
+       cumint+=0.5*(ang-ang0)*(np.sin(ang)*val+np.sin(ang0)*val0)
       self.cumintdata.append(cumint)
       ang0=ang
       val0=val
@@ -221,12 +215,12 @@ class ElScattCrossSec:
        break
       else:
        if self.data[i][0] >= a:
-        intsum+=0.5*(self.data[i+1][0]-self.data[i][0])*(sin(self.data[i+1][0])*self.data[i+1][1]+sin(self.data[i][0])*self.data[i][1])
+        intsum+=0.5*(self.data[i+1][0]-self.data[i][0])*(np.sin(self.data[i+1][0])*self.data[i+1][1]+np.sin(self.data[i][0])*self.data[i][1])
     return intsum
 
   @staticmethod
   def findemfp(ecsarr,en):
-    enarr=zeros(len(ecsarr))
+    enarr=np.zeros(len(ecsarr))
     for i in range(len(ecsarr)):
       enarr[i]=ecsarr[i].energy
     ecsind,enfound=findnearest(enarr,en)
@@ -297,9 +291,9 @@ class InelScattCrossSec:
     del lines1[0]
     self.NE=int(len(lines1))
     self.NdelE=int(len(lines1[0].strip().split()))
-    self.icsdata=zeros((self.NE,self.NdelE))
-    self.cumintdata=zeros((self.NE,self.NdelE)) # stores for each E the cumulative integral from 0->delE cross_section(delE) * delE (corresponding delE indexed in same order in self.icsdata[E,:])
-    self.totcrosssec=zeros(self.NE)
+    self.icsdata=np.zeros((self.NE,self.NdelE))
+    self.cumintdata=np.zeros((self.NE,self.NdelE)) # stores for each E the cumulative integral from 0->delE cross_section(delE) * delE (corresponding delE indexed in same order in self.icsdata[E,:])
+    self.totcrosssec=np.zeros(self.NE)
     Ecoords=self.getEcoords()
     for i in range(self.NE):
       delEcoords=self.getdelEcoords(Ecoords[i])
@@ -339,14 +333,14 @@ class InelScattCrossSec:
     self.wmax=wval
     self.Nw=wind+1
     self.wcoords=self.getwcoords()
-    qind,qval=findnearest(self.qcoords,sqrt(2.*self.wmax)) # Find last index of input table needed
+    qind,qval=findnearest(self.qcoords,np.sqrt(2.*self.wmax)) # Find last index of input table needed
     if qind < self.Nq: # Round up to ensure table is complete for all transitions
      qind+=1
      qval=self.qcoords[qind]
     self.qmax=qval
     self.Nq=qind+1
     self.qcoords=self.getqcoords()
-    self.elfqw=zeros((self.Nw,self.Nq))
+    self.elfqw=np.zeros((self.Nw,self.Nq))
     for i in range(self.Nw):
       linesplit=lines2[0].strip().split()
       del lines2[0]
@@ -354,36 +348,36 @@ class InelScattCrossSec:
         val=float(linesplit[j])
         self.elfqw[i,j]=val
 # Find maximum inelastic scattering angle to save loop iterations later
-    a=sqrt(self.Emax*(self.Emax-self.wmin))
+    a=np.sqrt(self.Emax*(self.Emax-self.wmin))
     b=4.*self.Emax-2.*self.wmin
     c=-4.*a
     maxang=-1 # degrees (int)
     done=False
     while not done:
       maxang+=1
-      ang=maxang*pi/180.
-      q=sqrt(b+c*cos(ang))
+      ang=maxang*np.pi/180.
+      q=np.sqrt(b+c*np.cos(ang))
       if (q > self.qmax) or (maxang == 180):
        done=True
     self.maxang=maxang
     return
 
   def finddcsangle(self,E,delE,wind,rand):
-    deltheta=1.*pi/180. # grid in increments of 1 deg (consistent with elastic scattering)
-    a=sqrt(E*(E-delE))
+    deltheta=1.*np.pi/180. # grid in increments of 1 deg (consistent with elastic scattering)
+    a=np.sqrt(E*(E-delE))
     b=4.*E-2.*delE
     c=-4.*a
-    d=1./(pi*pi*E)
+    d=1./(np.pi*np.pi*E)
     ang0=0.
     val0=0.
     cumint=0.
-    cumintarr=zeros((self.maxang+1))
+    cumintarr=np.zeros((self.maxang+1))
     for i in range(1,self.maxang+1):
       ang=i*deltheta
-      q=sqrt(b+c*cos(ang))
+      q=np.sqrt(b+c*np.cos(ang))
       qind,qval=findnearest(self.qcoords,q)
       val=d*self.elfqw[wind,qind]*a/(q*q)
-      cumint+=0.5*deltheta*(val*sin(ang)+val0*sin(ang0))
+      cumint+=0.5*deltheta*(val*np.sin(ang)+val0*np.sin(ang0))
       cumintarr[i]=cumint
     ind,val=findnearest(cumintarr,rand*cumintarr[-1])
     theta=ind*deltheta
@@ -423,12 +417,12 @@ class InelScattCrossSec:
 class Electron:
 
   def __init__(self,order,energy,coords,vtheta,vphi,ecsdata,icsinst):
-    self.order=order       # intr describing order in generation by collision (0=primary, 1=initial secondary, ...)
-    self.energy=energy     # energy in eV
-    self.coords=coords     # coordinates (Cartesian)
-    self.vtheta=0.         # angle from positive z-axis in direction of velocity relative to current coordinates
-    self.vphi=0.           # angle from positive x-axis in direction of velocity relative to current coordinates
-    self.vdirec=zeros((3)) # unit vector in direction of velocity (Cartesian) relative to current coordinates
+    self.order=order          # intr describing order in generation by collision (0=primary, 1=initial secondary, ...)
+    self.energy=energy        # energy in eV
+    self.coords=coords        # coordinates (Cartesian)
+    self.vtheta=0.            # angle from positive z-axis in direction of velocity relative to current coordinates
+    self.vphi=0.              # angle from positive x-axis in direction of velocity relative to current coordinates
+    self.vdirec=np.zeros((3)) # unit vector in direction of velocity (Cartesian) relative to current coordinates
     self.updatevdirecpolar(vtheta,vphi)
     self.transmitted=False
     self.stopped=False
@@ -462,11 +456,11 @@ class Electron:
     return
 
   def updatevdirecpolar(self,dtheta,dphi):
-    self.vtheta=(self.vtheta+dtheta)%(2*pi)
-    self.vphi=(self.vphi+dphi)%(2*pi)
-    dx=sin(self.vtheta)*cos(self.vphi)
-    dy=sin(self.vtheta)*sin(self.vphi)
-    dz=cos(self.vtheta)
+    self.vtheta=(self.vtheta+dtheta)%(2*np.pi)
+    self.vphi=(self.vphi+dphi)%(2*np.pi)
+    dx=np.sin(self.vtheta)*np.cos(self.vphi)
+    dy=np.sin(self.vtheta)*np.sin(self.vphi)
+    dz=np.cos(self.vtheta)
     self.vdirec[0]=dx
     self.vdirec[1]=dy
     self.vdirec[2]=dz
@@ -483,20 +477,20 @@ class Electron:
     vx=self.vdirec[0]
     vy=self.vdirec[1]
     vz=self.vdirec[2]
-    beta=pi-self.vtheta
-    Ecos2beta=self.energy*ev2au*cos(beta)*cos(beta)
+    beta=np.pi-self.vtheta
+    Ecos2beta=self.energy*ev2au*np.cos(beta)*np.cos(beta)
     if Ecos2beta > U0:
-     T=4.*sqrt(1.-U0/Ecos2beta)/(1.+sqrt(1.-U0/Ecos2beta))**2
+     T=4.*np.sqrt(1.-U0/Ecos2beta)/(1.+np.sqrt(1.-U0/Ecos2beta))**2
     else:
      T=0.
     if rand < T: # transmit
-     self.vtheta=arcsin(sqrt(self.energy/(self.energy-U0*au2ev))*sin(beta)) # self.vtheta is now angle from normal to -z axis
+     self.vtheta=np.arcsin(np.sqrt(self.energy/(self.energy-U0*au2ev))*np.sin(beta)) # self.vtheta is now angle from normal to -z axis
      self.energy=self.energy-U0*au2ev # no need to use updateenergy which looks up new MFP data
      self.transmitted=True
     else: # reflect
      delr=self.coords[2]/vz
      self.updatecoords(-delr) # move back to z=0 (negative displacement along same velocity)
-     self.updatevdirecpolar(pi-2*self.vtheta,0.)
+     self.updatevdirecpolar(np.pi-2*self.vtheta,0.)
      self.updatecoords(delr) # move along new direction by remaining displacement
     return
 
