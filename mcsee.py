@@ -397,10 +397,11 @@ class Electron(object):
   def __init__(self,order,energy,coords,vtheta,vphi,ecsdata,icsinst):
     self.order=order          # intr describing order in generation by collision (0=primary, 1=initial secondary, ...)
     self.energy=energy        # energy in eV
-    self.coords=coords        # coordinates (Cartesian)
+    self.coords=np.zeros(3)   # coordinates (Cartesian)
+    self.coords[:]=coords[:]
     self.vtheta=0.            # angle from positive z-axis in direction of velocity relative to current coordinates
     self.vphi=0.              # angle from positive x-axis in direction of velocity relative to current coordinates
-    self.vdirec=np.zeros((3)) # unit vector in direction of velocity (Cartesian) relative to current coordinates
+    self.vdirec=np.zeros(3)   # unit vector in direction of velocity (Cartesian) relative to current coordinates
     self.updatevdirecpolar(vtheta,vphi)
     self.transmitted=False
     self.stopped=False
